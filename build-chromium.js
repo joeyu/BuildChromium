@@ -4,7 +4,7 @@
  * chromium.
  *
  * This program file needs to be put in the same directory where 
- * '.gclient' resides.
+ * your repo's '.gclient' resides.
  *
  * A 'builds' directory needs to be created before running this 
  * program. It is where the final built .apk files reside. You can
@@ -14,16 +14,19 @@
  * The 'archs' array variable defines what architectures to be built.
  * The available values are 'arm', 'arm64', 'ia32', and 'x64'.
  *
- * Note: A bootstrap repo need to be checkout in order to run this 
+ * NOTE:
+ *
+ * A bootstrap repo need to be checkout in order to run this 
  * program. Please refer to the following url for instructions:
  *
  *  http://dev.chromium.org/developers/how-tos/get-the-code
  *
- * The program also requires 'zfse':
+ * Make sure you've run 'gclient sync --nohooks' to sync up all deps.
  *
- *  https://github.com/joeyu/zfse
+ * The program also requires 'zfse' and 'colors' node.js modules:
  *
- * Please git clone it into your 'node_modules' directory.
+ * $ npm install zfse
+ * $ npm install colors
  *
  */
 var cp = require('child_process');
@@ -31,15 +34,17 @@ var path = require('path');
 var fs = require('fs');
 var assert = require('assert');
 var colors = require('colors');
-var zfse = require('zfse/zfse.js'); // https://github.com/joeyu/zfse
+var zfse = require('zfse');
 
-var ninjaCmd = ['-C', 'out/Release', 'content_shell_apk'];
-var releaseFile = 'ContentShell.apk';
+//var ninjaCmd = ['-C', 'out/Release', 'content_shell_apk'];
+//var releaseFile = 'ContentShell.apk';
+var ninjaCmd = ['-C', 'out/Release', 'chrome_shell_apk'];
+var releaseFile = 'ChromeShell.apk';
 var srcRoot = process.cwd();
 var srcPath = srcRoot + '/src';
 var gypEnvFile = srcRoot + '/chromium.gyp_env';
 var releasePath = srcRoot + '/builds';          // where the builts to be copied.
-var archs = ['ia32', 'arm'];    // what architectures will be built
+var archs = ['ia32', 'x64', 'arm', 'arm64'];    // what architectures will be built
 
 var Commit = (function () {
     function Commit(srcPath, refspec) {
@@ -112,7 +117,7 @@ function prepareBuild(arch) {
 
     // Remove the 'src/out'
     if (fs.existsSync(outDir)) {
-        zfse.rrmdir(outDir);
+        zfse.rRmDirSync(outDir);
         console.log("[INFO] '%s' is removed!", outDir);
     }
     else {
@@ -176,19 +181,15 @@ function copyBuild() {
     var s = srcPath + '/out/Release/apks/' + releaseFile;
     var d = relDir + '/' + path.basename(releaseFile, '.apk') + '_' + rev + '_' + arch +'.apk';
     console.log("[INFO] Copying '%s' to '%s'", s, d);
-    var streamD = fs.createWriteStream(d);
-    fs.createReadStream(s).pipe(streamD);
-    streamD.on('finish', function () {
-        // Sync the file timestamp to the commit time
-        fs.utimesSync(d, head.authorDate, head.authorDate);
-        if (archs.length > 0) {
-            prepareBuild(archs.shift());
-        }
-        else {
-            fs.utimesSync(relDir, head.authorDate, head.authorDate);
-            process.exit(0); // all done, so exit
-        }
-    });
+    zfse.copyFileSync(s, d);
+    fs.utimesSync(d, head.authorDate, head.authorDate);
+    if (archs.length > 0) {
+        prepareBuild(archs.shift());
+    }
+    else {
+        fs.utimesSync(relDir, head.authorDate, head.authorDate);
+        process.exit(0); // all done, so exit
+    }
 }
 
 
