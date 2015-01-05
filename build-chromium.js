@@ -117,7 +117,7 @@ function prepareBuild(arch) {
 
     // Remove the 'src/out'
     if (fs.existsSync(outDir)) {
-        zfse.rRmDirSync(outDir);
+        zfse.rRmDir(outDir);
         console.log("[INFO] '%s' is removed!", outDir);
     }
     else {
@@ -181,7 +181,7 @@ function copyBuild() {
     var s = srcPath + '/out/Release/apks/' + releaseFile;
     var d = relDir + '/' + path.basename(releaseFile, '.apk') + '_' + rev + '_' + arch +'.apk';
     console.log("[INFO] Copying '%s' to '%s'", s, d);
-    zfse.copyFileSync(s, d);
+    zfse.copyFile(s, d);
     fs.utimesSync(d, head.authorDate, head.authorDate);
     if (archs.length > 0) {
         prepareBuild(archs.shift());

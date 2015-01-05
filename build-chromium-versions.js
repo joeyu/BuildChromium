@@ -18,7 +18,7 @@ var fs = require('fs');
 var colors = require('colors');
 
 
-var verMin = 29;    // min version to be built
+var verMin = 28;    // min version to be built
 var verMax = 35;    // max version to be built
 var commits = []; 
 
@@ -44,14 +44,14 @@ function getLog() {
             }
             else { // succeeded
                 //console.log(log);
-                search(log);
+                searchLog(log);
             }
         }
     });
 }
 
 // Searches the log for commits with changes to 'MAJOR='
-function search(log) {
+function searchLog(log) {
     var logs = log.split('\n');
     var c;
 
@@ -68,7 +68,11 @@ function search(log) {
     });
 
     console.log(JSON.stringify(commits).replace(/\}\,\{/g, '},\n{').yellow);
+        return;
     srcGitReset();
+}
+
+function getTag() {
 }
 
 // Let's clean up 'src' thoroughly
